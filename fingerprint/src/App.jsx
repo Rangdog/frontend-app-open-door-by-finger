@@ -1,26 +1,18 @@
-import { useState } from 'react'
-import {Container, Typography, Box } from '@mui/material'
-import './App.css'
-import { Routes,Route, useLocation  } from 'react-router-dom'
-import Upload from './components/Upload'
-import Verify from './components/Verify'
+import React from 'react';
+import Home from './pages/home';
+import { CssBaseline, AppBar, Toolbar, Typography } from '@mui/material';
 
-function App() {
-  const location = useLocation()
-  
-  return (
-    <Container>
-      <Typography variant="h2" align="center" gutterBottom>
-          FingerPrint APP
-      </Typography>
-      <Box mb={5}>
-        <Upload/>
-      </Box>
-      <Box mb={5}>
-        <Verify/>
-      </Box>
-    </Container>
-  )
-}
+const App = () => {
+    return (
+        <CssBaseline>
+            <AppBar position="static">
+                <Toolbar>
+                    <Typography variant="h6">Quản lý Cửa</Typography>
+                </Toolbar>
+            </AppBar>
+            <Home />
+        </CssBaseline>
+    );
+};
 
-export default App
+export default App;
