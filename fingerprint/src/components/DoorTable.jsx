@@ -1,93 +1,95 @@
 import React, { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography  } from "@mui/material";
-import { deleteMember, getMembers, updateMember, createMember } from "../api/services";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, } from "@mui/material";
+import { getDoors, createDoor, deleteDoor, updateDoor } from "../api/services";
 import MuiAlert from '@mui/material/Alert';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-
-const MemberManagement = ({ onBack }) => { // Nhận prop onBack
-    const [members, setMembers] = useState([]);
+const DoorTable = ({ onManageMembers, onViewHistory }) => {
+    const [doors, setDoors] = useState([]);
     const [open, setOpen] = useState(false);
-    const [formData, setFormData] = useState({ id: null, fingerprint: "", name: "" });
+    const [formData, setFormData] = useState({ id: null, doorName: "", location: "" });
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
-    const fetchMembers = async () => {
-        const data = await getMembers();
-        setMembers(data);
+    const fetchDoors = async () => {
+        const data = await getDoors();
+        setDoors(data);
     };
-
     useEffect(() => {
-        fetchMembers();
+        fetchDoors();
     }, []);
 
-    const handleOpen = (member = {id: null, fingerprint: "", name:""}) => {
-        setFormData(member);
+    const handleOpen = (door = { id: null, doorName: "", location: "" }) => {
+        setFormData(door);
         setOpen(true);
-    }
+    };
 
     const handleClose = () => {
         setOpen(false);
-        setFormData({id:null, fingerprint: "", name: ""});
-    }
+        setFormData({ id: null, doorName: "", location: "" }); // Reset form
+    };
 
-    const handleChange = (e) =>{
-        const {name,value} = e.target;
+    const handleChange = (e) => {
+        const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-    }
+    };
 
-    const handleSubmit = async(e) =>{
+    const handleSubmit = async (e) => {
         e.preventDefault();
         try{
-            if(formData.id){
-                // Update member
-                await updateMember(formData.id, formData)
-                setSnackbarMessage("Cập nhật thành viên thành công!");
-            }
-            else{
-                // Create member
-                await createMember(formData)
-                setSnackbarMessage("Thêm thành viên thành công!");
+            if (formData.id) {
+                // Update door
+                await updateDoor(formData.id, formData);
+                setSnackbarMessage("Cập nhật cửa thành công!");
+            } else {
+                // Create door
+                await createDoor(formData);
+                setSnackbarMessage("Thêm cửa thành công!");
             }
             setSnackbarSeverity("success");
         }
-        catch{
+        catch (err){
             setSnackbarMessage("Có lỗi xảy ra!");
             setSnackbarSeverity("error");
         }
         handleClose();
-        fetchMembers();
+        fetchDoors(); // Refresh the list
         setSnackbarOpen(true);
-    }
+    };
 
-    const handleDelete = async(id) =>{
+    const handleDelete = async (id) => {
         try{
-            await deleteMember(id);
-            setSnackbarMessage("Xóa thành viên thành công!");
+            await deleteDoor(id);
+            setSnackbarMessage("Xóa cửa thành công!");
             setSnackbarSeverity("success");
         }
-        catch{
+        catch(err){
             setSnackbarMessage("Có lỗi xảy ra khi xóa!");
             setSnackbarSeverity("error");
         }
-        fetchMembers();
+        fetchDoors(); // Refresh the list
         setSnackbarOpen(true);
-    }
+    };
+
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
+
     return (
         <div style={{ padding: '20px' }}>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
                 <Grid item>
-                    <Button variant="contained" onClick={onBack}>Quay lại</Button>
+                    <Button variant="contained" onClick={onManageMembers}>Quản lý thành viên</Button>
                 </Grid>
                 <Grid item>
-                    <Button variant="contained" onClick={() => handleOpen()}>Thêm thành viên</Button>
+                    <Button variant="contained" onClick={onViewHistory}>Quản lý lịch sử</Button>
+                </Grid>
+                <Grid item>
+                    <Button variant="contained" color="success" onClick={() => handleOpen()}>Thêm Cửa</Button>
                 </Grid>
             </Grid>
             <TableContainer>
@@ -95,20 +97,20 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                     <TableHead>
                         <TableRow>
                             <TableCell>ID</TableCell>
-                            <TableCell>Dấu vân tay</TableCell>
-                            <TableCell>Tên</TableCell>
+                            <TableCell>Tên cửa</TableCell>
+                            <TableCell>Vị trí</TableCell>
                             <TableCell>Hành Động</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {members.map((member) => (
-                            <TableRow key={member.id}>
-                                <TableCell>{member.id}</TableCell>
-                                <TableCell>{member.fingerprint}</TableCell>
-                                <TableCell>{member.name}</TableCell>
+                        {doors.map((door) => (
+                            <TableRow key={door.id}>
+                                <TableCell>{door.id}</TableCell>
+                                <TableCell>{door.doorName}</TableCell>
+                                <TableCell>{door.location}</TableCell>
                                 <TableCell>
-                                        <Button variant="contained" onClick={() => handleOpen(member)} style={{ marginRight: '10px' }}>Sửa</Button>
-                                        <Button variant="contained" color="error" onClick={() => handleDelete(member.id)}>Xóa</Button>
+                                        <Button variant="contained" onClick={() => handleOpen(door)} style={{ marginRight: '10px' }}>Sửa</Button>
+                                        <Button variant="contained" color="error" onClick={() => handleDelete(door.id)}>Xóa</Button>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -116,28 +118,25 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                 </Table>
             </TableContainer>
             <Dialog open={open} onClose={handleClose}>
-                <DialogTitle>{formData.id ? "Cập Nhật Thành Viên" : "Thêm Thành Viên"}</DialogTitle>
+                <DialogTitle>{formData.id ? "Cập Nhật Cửa" : "Thêm Cửa"}</DialogTitle>
                 <DialogContent>
-                    <TextField
-                        margin="dense"
-                        name="fingerprint"
-                        label="mã dấu vân tay"
-                        type="number"
-                        fullWidth
-                        value={formData.fingerprint}
-                        onChange={handleChange}
-                        InputProps={{
-                            readOnly: true,
-                        }}
-                    />
                     <TextField
                         autoFocus
                         margin="dense"
-                        name="name"
-                        label="Tên Thành Viên"
+                        name="doorName"
+                        label="Tên Cửa"
                         type="text"
                         fullWidth
-                        value={formData.name}
+                        value={formData.doorName}
+                        onChange={handleChange}
+                    />
+                    <TextField
+                        margin="dense"
+                        name="location"
+                        label="Vị Trí"
+                        type="text"
+                        fullWidth
+                        value={formData.location}
                         onChange={handleChange}
                     />
                 </DialogContent>
@@ -155,4 +154,4 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
     );
 };
 
-export default MemberManagement;
+export default DoorTable;
