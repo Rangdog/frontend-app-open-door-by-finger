@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button } from "@mui/material";
-import { getHistory } from "../components/api";
+import { getHistories } from "../api/services";
 
 const HistoryManagement = ({ onViewDetail, onBack }) => { // Nhận prop onBack
     const [history, setHistory] = useState([]);

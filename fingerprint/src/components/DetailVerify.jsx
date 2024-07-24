@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button } from "@mui/material";
-import { getDetailVerify } from "../components/api";
+import { getDetailVerifies } from "../api/services";
 
 const DetailVerify = ({ historyId, onBack }) => { // Nhận prop onBack
     const [details, setDetails] = useState([]);
