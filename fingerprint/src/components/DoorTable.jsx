@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, } from "@mui/material";
-import { getDoors, createDoor, deleteDoor, updateDoor } from "../api/services";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, Autocomplete, } from "@mui/material";
+import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify } from "../api/services";
 import MuiAlert from '@mui/material/Alert';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
@@ -9,8 +9,11 @@ const Alert = React.forwardRef(function Alert(props, ref) {
 
 const DoorTable = ({ onManageMembers, onViewHistory }) => {
     const [doors, setDoors] = useState([]);
+    const [members, setMembers] = useState([]);
     const [open, setOpen] = useState(false);
+    const [formFingerprintRegistration, setformFingerprintRegistration] = useState(false);
     const [formData, setFormData] = useState({ id: null, doorName: "", location: "" });
+    const [formDataFingerprintRegistration, setformDataFingerprintRegistration] = useState({id:null, doorId:"", memberId:""});
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -19,8 +22,13 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         const data = await getDoors();
         setDoors(data);
     };
+    const fetchMembers = async () => {
+        const data = await getMembers();
+        setMembers(data)
+    }
     useEffect(() => {
         fetchDoors();
+        fetchMembers();
     }, []);
 
     const handleOpen = (door = { id: null, doorName: "", location: "" }) => {
@@ -32,6 +40,32 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         setOpen(false);
         setFormData({ id: null, doorName: "", location: "" }); // Reset form
     };
+
+    const fingerprintRegistration = (DetailVerify = {id:null, doorId:"", memberId:""}) => {
+        setformDataFingerprintRegistration(DetailVerify);
+        setformFingerprintRegistration(true);
+    }
+
+    const handleCloseFingerprintRegistration = () => {
+        setformFingerprintRegistration(false);
+        setFormData({id:null, doorId:"", memberId:""}); // Reset form
+    }
+
+    const handleSubmitFingerprintRegistration = async() => {
+        e.preventDefault();
+        try{
+            await createDetailVerify(formDataFingerprintRegistration)
+            setSnackbarMessage("Đăng ký dấu vân tay thành công!");
+            setSnackbarSeverity("success");
+        }
+        catch(e){
+            setSnackbarMessage("Có lỗi xảy ra khi đăng ký!");
+            setSnackbarSeverity("error");
+        }
+        handleCloseFingerprintRegistration();
+        fetchDoors();
+        setSnackbarOpen(true)
+    }
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -110,7 +144,9 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                 <TableCell>{door.location}</TableCell>
                                 <TableCell>
                                         <Button variant="contained" onClick={() => handleOpen(door)} style={{ marginRight: '10px' }}>Sửa</Button>
+                                        <Button variant="contained" color="secondary" onClick={() => handleDelete(door.id)} style={{ marginRight: '10px' }}>Đăng ký vân tay</Button>
                                         <Button variant="contained" color="error" onClick={() => handleDelete(door.id)}>Xóa</Button>
+                                        
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -144,6 +180,29 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                     <Button onClick={handleClose} color="primary">Hủy</Button>
                     <Button onClick={handleSubmit} color="primary">Lưu</Button>
                 </DialogActions>
+            </Dialog>
+            <Dialog open={formFingerprintRegistration} onClose = {handleCloseFingerprintRegistration}>
+                        <DialogTitle>Đằng ký dấu vân tay</DialogTitle>
+                        <DialogContent>
+                            <Autocomplete>
+                                options = {members}
+                                getOptionLabel = {(option) => option.name}
+                                onChange = {(event, newvalue) =>{
+                                    setformDataFingerprintRegistration({
+                                        ...formDataFingerprintRegistration,
+                                        memberId: newvalue?newvalue.id:""
+                                    });
+                                }}
+                                renderInput{(params) =>(
+                                    <TextField {...params} label="Chọn thành viên" variant="outlined" fullWidth/>
+                                )}
+                                fullWidth
+                            </Autocomplete>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleCloseFingerprintRegistration} color="primary">Hủy</Button>
+                            <Button onClick={handleSubmitFingerprintRegistration} color="primary">Lưu</Button>
+                        </DialogActions>
             </Dialog>
             <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
                 <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>

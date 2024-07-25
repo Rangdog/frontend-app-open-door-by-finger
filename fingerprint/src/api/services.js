@@ -78,7 +78,7 @@ export const getDetailVerifies = async () => {
 };
 
 export const createDetailVerify = async (detailVerifyData) => {
-    const response = await axios.post(`${API_URL}/detail-verify`, detailVerifyData);
+    const response = await axiosInstance.post(`/detail-verify`, detailVerifyData);
     return response.data;
 };
 

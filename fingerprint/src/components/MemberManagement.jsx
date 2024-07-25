@@ -12,6 +12,8 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
     const [members, setMembers] = useState([]);
     const [open, setOpen] = useState(false);
     const [formData, setFormData] = useState({ id: null, fingerprint: "", name: "" });
+    const [imagefile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -42,6 +44,12 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
 
     const handleSubmit = async(e) =>{
         e.preventDefault();
+        const formDataSend = new FormData()
+        formDataSend.append("fingerprint", formData.fingerprint);
+        formDataSend.append("name", formData.name);
+        if(imagefile){
+            formDataSend.append("imagePath", imagefile);
+        }
         try{
             if(formData.id){
                 // Update member
@@ -80,6 +88,12 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
+
+    const handleImageChange = (e) =>{
+        const file = e.target.files[0];
+        setImageFile(file)
+        setImagePreview(URL.createObjectURL(file))
+    }
     return (
         <div style={{ padding: '20px' }}>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
@@ -140,6 +154,17 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                         value={formData.name}
                         onChange={handleChange}
                     />
+                    {!formData.id ? <div style={{marginTop: '20px'}}>
+                        <input type="file" accept="image/*" onChange={handleImageChange} style={{display: 'block', marginTop: '10px'}}/>
+                        <Typography variant="caption" color="textSecondary">
+                            Chọn hình ảnh dấu vân tay (Chỉ hỗ trợ hình ảnh).
+                        </Typography>
+                        {imagePreview && (<img src = {imagePreview} alt="preview" style={{marginTop : '10px', width:'100%', maxHeight:'200px', objectFit:'cover'}}
+                            
+                            />
+                        )}
+                    </div>
+                    : ""}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleClose} color="primary">Hủy</Button>
