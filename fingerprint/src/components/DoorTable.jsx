@@ -41,17 +41,19 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         setFormData({ id: null, doorName: "", location: "" }); // Reset form
     };
 
-    const fingerprintRegistration = (DetailVerify = {id:null, doorId:"", memberId:""}) => {
-        setformDataFingerprintRegistration(DetailVerify);
+    const fingerprintRegistration = (id) => {
+        const detailVerify = {id:null, doorId:id, memberId:""}
+        setformDataFingerprintRegistration(detailVerify);
         setformFingerprintRegistration(true);
     }
 
     const handleCloseFingerprintRegistration = () => {
         setformFingerprintRegistration(false);
-        setFormData({id:null, doorId:"", memberId:""}); // Reset form
+        setformDataFingerprintRegistration({id:null, doorId:"", memberId:""}); // Reset form
     }
 
-    const handleSubmitFingerprintRegistration = async() => {
+    const handleSubmitFingerprintRegistration = async(e) => {
+        console.log(formDataFingerprintRegistration)
         e.preventDefault();
         try{
             await createDetailVerify(formDataFingerprintRegistration)
@@ -144,7 +146,9 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                 <TableCell>{door.location}</TableCell>
                                 <TableCell>
                                         <Button variant="contained" onClick={() => handleOpen(door)} style={{ marginRight: '10px' }}>Sửa</Button>
-                                        <Button variant="contained" color="secondary" onClick={() => handleDelete(door.id)} style={{ marginRight: '10px' }}>Đăng ký vân tay</Button>
+                                        <Button variant="contained" color="secondary" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Đăng ký vân tay</Button>
+                                        <Button variant="contained" color="secondary" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Chi tiết</Button>
+                                        <Button variant="contained" color="success" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Mở cửa</Button>
                                         <Button variant="contained" color="error" onClick={() => handleDelete(door.id)}>Xóa</Button>
                                         
                                 </TableCell>
@@ -184,8 +188,8 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
             <Dialog open={formFingerprintRegistration} onClose = {handleCloseFingerprintRegistration}>
                         <DialogTitle>Đằng ký dấu vân tay</DialogTitle>
                         <DialogContent>
-                            <Autocomplete>
-                                options = {members}
+                            <Autocomplete
+                                options={members}
                                 getOptionLabel = {(option) => option.name}
                                 onChange = {(event, newvalue) =>{
                                     setformDataFingerprintRegistration({
@@ -193,11 +197,11 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                         memberId: newvalue?newvalue.id:""
                                     });
                                 }}
-                                renderInput{(params) =>(
+                                renderInput={(params) =>(
                                     <TextField {...params} label="Chọn thành viên" variant="outlined" fullWidth/>
                                 )}
                                 fullWidth
-                            </Autocomplete>
+                            />
                         </DialogContent>
                         <DialogActions>
                             <Button onClick={handleCloseFingerprintRegistration} color="primary">Hủy</Button>

@@ -37,13 +37,21 @@ export const getMembers = async () => {
 };
 
 export const createMember = async (memberData) => {
-    console.log("Sending data to server:", JSON.stringify(memberData));
-    const response = await axiosInstance.post(`/members`, memberData);
+    console.log(memberData.name)
+    const response = await axios.post(`${API_URL}/members`, memberData, {
+        headers: {
+            'Content-Type' : "multipart/form-data"
+        }
+    });
     return response.data;
 };
 
 export const updateMember = async (id, memberData) => {
-    const response = await axios.put(`${API_URL}/members/${id}`, memberData);
+    const response = await axios.put(`${API_URL}/members/${id}`, memberData,{
+        headers: {
+            'Content-Type' : "multipart/form-data"
+        }
+    });
     return response.data;
 };
 

@@ -47,18 +47,23 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
         const formDataSend = new FormData()
         formDataSend.append("fingerprint", formData.fingerprint);
         formDataSend.append("name", formData.name);
+        console.log("Image File Name:", imagefile.name);
+        console.log("Image File Type:", imagefile.type);
         if(imagefile){
-            formDataSend.append("imagePath", imagefile);
+            formDataSend.append("file", imagefile);
+        }
+        for (const [key, value] of formDataSend.entries()) {
+            console.log(`${key}: ${value}`);
         }
         try{
             if(formData.id){
                 // Update member
-                await updateMember(formData.id, formData)
+                await updateMember(formData.id, formDataSend)
                 setSnackbarMessage("Cập nhật thành viên thành công!");
             }
             else{
                 // Create member
-                await createMember(formData)
+                await createMember(formDataSend)
                 setSnackbarMessage("Thêm thành viên thành công!");
             }
             setSnackbarSeverity("success");
@@ -159,7 +164,7 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                         <Typography variant="caption" color="textSecondary">
                             Chọn hình ảnh dấu vân tay (Chỉ hỗ trợ hình ảnh).
                         </Typography>
-                        {imagePreview && (<img src = {imagePreview} alt="preview" style={{marginTop : '10px', width:'100%', maxHeight:'200px', objectFit:'cover'}}
+                        {imagePreview && (<img src = {imagePreview} alt="preview" style={{marginTop : '10px', width:'96px', maxHeight:'96px', objectFit:'cover'}}
                             
                             />
                         )}
