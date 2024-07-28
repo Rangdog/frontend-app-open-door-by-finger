@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, Autocomplete, } from "@mui/material";
-import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify,getMembersByDoor, getHistoryByDoor, verifyFingerprint  } from "../api/services";
+import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify,getMembersByDoor, getHistoryByDoor, verifyFingerprint, deleteDetailVerify, ResetFingerPrint, getMemberForDoor  } from "../api/services";
 import MuiAlert from '@mui/material/Alert';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
@@ -13,7 +13,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
     const [open, setOpen] = useState(false);
     const [formFingerprintRegistration, setformFingerprintRegistration] = useState(false);
     const [formData, setFormData] = useState({ id: null, doorName: "", location: "" });
-    const [formDataFingerprintRegistration, setformDataFingerprintRegistration] = useState({id:null, doorId:"", memberId:""});
+    const [formDataFingerprintRegistration, setformDataFingerprintRegistration] = useState({id:null, door: {id:""}, member:{id:""}});
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
@@ -32,7 +32,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         setDoors(data);
     };
     const fetchMembers = async () => {
-        const data = await getMembers();
+        const data = await getMemberForDoor(currentDoorId);
         setMembers(data)
     }
 
@@ -50,6 +50,10 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         }
     }
 
+    useEffect(() =>{
+        fetchMembers()
+    }, [currentDoorId])
+
     useEffect(() => {
         fetchDoors();
         fetchMembers();
@@ -60,20 +64,41 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         setOpen(true);
     };
 
+
     const handleClose = () => {
         setOpen(false);
         setFormData({ id: null, doorName: "", location: "" }); // Reset form
     };
 
+    const handleFingerPrint = async() =>{
+        try{
+            const result = await ResetFingerPrint(doorId); 
+            if (result.message && result.message.includes('Fingerprint data and database have been reset successfully')) {
+                setSnackbarMessage(result.message);  
+                setSnackbarSeverity("success");
+            } else if (result.message.includes('Failed to reset fingerprint data.')) {
+                setSnackbarMessage(result.message);
+                setSnackbarSeverity("error");
+            }
+        }
+        catch(error){
+            setSnackbarMessage("Có lỗi xảy ra");
+            setSnackbarSeverity("error");
+        }
+        fetchDoors();
+        setSnackbarOpen(true)
+    }
+
     const fingerprintRegistration = (id) => {
-        const detailVerify = {id:null, doorId:id, memberId:""}
+        const detailVerify = {id:null, door: {id:id}, member:{id:""}}
         setformDataFingerprintRegistration(detailVerify);
         setformFingerprintRegistration(true);
+        setCurrentDoorId(id)
     }
 
     const handleCloseFingerprintRegistration = () => {
         setformFingerprintRegistration(false);
-        setformDataFingerprintRegistration({id:null, doorId:"", memberId:""}); // Reset form
+        setformDataFingerprintRegistration({id:null, door: {id:""}, member:{id:""}}); // Reset form
     }
 
     const handleSubmitFingerprintRegistration = async(e) => {
@@ -140,6 +165,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
     };
 
     const handleDetailOpen = (door) =>{
+        setCurrentDoorId(door.id);
         fetchDoorDetails(door.id)
         setDetailDialogOpen(true);
     }
@@ -173,21 +199,45 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         
         try {
             const result = await verifyFingerprint(currentDoorId, selectedFile);
-            if (result.message === 'Unlock successful!') {
-            setSnackbarMessage(`Mở cửa thành công! Thành viên: ${result.label}`);
-            setSnackbarSeverity("success");
+            console.log(result.message)
+            console.log(result.label)
+            console.log(result.message === 'Mở cửa thành công! Xin chào ' + result.label)
+            // Kiểm tra phản hồi từ API
+            if (result.message && result.message.includes('Mở cửa thành công! Xin chào')) {
+                setSnackbarMessage(result.message);  // Sử dụng thông báo từ server
+                setSnackbarSeverity("success");
+            } else if (result.message === 'Bạn không có quyền mở cửa này.') {
+                setSnackbarMessage(result.message); // Thông báo không có quyền
+                setSnackbarSeverity("error");
+            } else if (result.message === 'Dấu vân tay của bạn chưa có trong cơ sở dữ liệu.') {
+                setSnackbarMessage(result.message); // Thông báo không tìm thấy vân tay
+                setSnackbarSeverity("error");
             } else {
-            setSnackbarMessage("Mở cửa thất bại! Không tìm thấy vân tay phù hợp.");
-            setSnackbarSeverity("error");
+                setSnackbarMessage("Mở cửa thất bại! Lỗi không xác định.");
+                setSnackbarSeverity("error");
             }
         } catch (error) {
             setSnackbarMessage("Có lỗi xảy ra khi xác thực vân tay");
             setSnackbarSeverity("error");
         }
-        
         setSnackbarOpen(true);
         handleUnlockClose();
     };
+
+    const handleDeleteDetailVerify = async (door_Id, member_Id) => {
+        try{
+            await deleteDetailVerify(door_Id, member_Id);
+            setSnackbarMessage("Xóa cửa thành công!");
+            setSnackbarSeverity("success");
+        }
+        catch(err){
+            console.log(err)
+            setSnackbarMessage("Có lỗi xảy ra khi xóa!");
+            setSnackbarSeverity("error");
+        }
+        fetchDoors(); // Refresh the list
+        setSnackbarOpen(true);
+    }
 
     return (
         <div style={{ padding: '20px' }}>
@@ -200,6 +250,9 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                 </Grid>
                 <Grid item>
                     <Button variant="contained" color="success" onClick={() => handleOpen()}>Thêm Cửa</Button>
+                </Grid>
+                <Grid item>
+                    <Button variant="contained" color="error" onClick={() => handleFingerPrint()}>Reset Fingerprint</Button>
                 </Grid>
             </Grid>
             <TableContainer>
@@ -269,7 +322,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                 onChange = {(event, newvalue) =>{
                                     setformDataFingerprintRegistration({
                                         ...formDataFingerprintRegistration,
-                                        memberId: newvalue?newvalue.id:""
+                                        member: newvalue ? { id: newvalue.id } : null
                                     });
                                 }}
                                 renderInput={(params) =>(
@@ -296,6 +349,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                     <TableCell>ID</TableCell>
                                     <TableCell>Tên thành viên</TableCell>
                                     <TableCell>Dấu vân tay</TableCell>
+                                    <TableCell>Hành động</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -304,6 +358,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                         <TableCell>{member.id}</TableCell>
                                         <TableCell>{member.name}</TableCell>
                                         <TableCell>{member.fingerprint}</TableCell>
+                                        <TableCell><Button variant="contained" color="error" onClick={() => handleDeleteDetailVerify(currentDoorId, member.id)}>Xóa</Button></TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

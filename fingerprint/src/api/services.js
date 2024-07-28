@@ -95,8 +95,13 @@ export const updateDetailVerify = async (id, detailVerifyData) => {
     return response.data;
 };
 
-export const deleteDetailVerify = async (id) => {
-    await axios.delete(`${API_URL}/detail-verify/${id}`);
+export const deleteDetailVerify = async (doorId,memberId) => {
+    await axios.delete(`${API_URL}/detail-verify/delete`, {
+        params: {
+            doorId: doorId,
+            memberId: memberId
+        }
+    });
 };
 
 //
@@ -106,7 +111,7 @@ export const verifyFingerprint = async (doorId, file) => {
     formData.append('doorId', doorId);
   
     try {
-      const response = await axios.post(`${API_URL}/api/doors/${doorId}/verify`, formData, {
+      const response = await axios.post(`${API_URL}/door/${doorId}/verify`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -131,3 +136,18 @@ export const getHistoryByDoor = async (doorId) => {
     const response = await axiosInstance.get(`/door/${doorId}/history`);
     return response.data;
 };
+
+
+export const ResetFingerPrint = async () => {
+    const response = await axiosInstance.get('/other');
+    return response.data;
+}
+
+export const getMemberForDoor = async (id) => {
+    const response = await axios.get(`${API_URL}/members/getmemberfordoor`, {
+        params: {
+            doorId: id
+        }
+    });
+    return response.data;
+}
