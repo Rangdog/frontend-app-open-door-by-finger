@@ -98,3 +98,36 @@ export const updateDetailVerify = async (id, detailVerifyData) => {
 export const deleteDetailVerify = async (id) => {
     await axios.delete(`${API_URL}/detail-verify/${id}`);
 };
+
+//
+export const verifyFingerprint = async (doorId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('doorId', doorId);
+  
+    try {
+      const response = await axios.post(`${API_URL}/api/doors/${doorId}/verify`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error verifying fingerprint:', error);
+      throw error;
+    }
+  };
+
+
+
+// Fetch members associated with a specific door
+export const getMembersByDoor = async (doorId) => {
+    const response = await axiosInstance.get(`/door/${doorId}/members`);
+    return response.data;
+};
+
+// Fetch history associated with a specific door
+export const getHistoryByDoor = async (doorId) => {
+    const response = await axiosInstance.get(`/door/${doorId}/history`);
+    return response.data;
+};

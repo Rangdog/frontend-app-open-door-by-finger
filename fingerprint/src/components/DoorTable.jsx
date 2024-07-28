@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, Autocomplete, } from "@mui/material";
-import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify } from "../api/services";
+import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify,getMembersByDoor, getHistoryByDoor, verifyFingerprint  } from "../api/services";
 import MuiAlert from '@mui/material/Alert';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
@@ -18,6 +18,15 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
+    //
+    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+    const [doorMembers, setDoorMembers] = useState([]);
+    const [doorHistory, setDoorHistory] = useState([]);
+    //
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
+    const [currentDoorId, setCurrentDoorId] = useState(null);
+
     const fetchDoors = async () => {
         const data = await getDoors();
         setDoors(data);
@@ -26,6 +35,21 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         const data = await getMembers();
         setMembers(data)
     }
+
+    const fetchDoorDetails = async(doorId) =>{
+        try{
+            const membersData = await getMembersByDoor(doorId); 
+            const historyData = await getHistoryByDoor(doorId); 
+            console.log(membersData)
+            console.log(historyData)
+            setDoorMembers(membersData);
+            setDoorHistory(historyData);
+        }
+        catch(error){
+            console.log("Lỗi lấy dữ liệu: ", error.message)
+        }
+    }
+
     useEffect(() => {
         fetchDoors();
         fetchMembers();
@@ -115,6 +139,56 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         setSnackbarOpen(false);
     };
 
+    const handleDetailOpen = (door) =>{
+        fetchDoorDetails(door.id)
+        setDetailDialogOpen(true);
+    }
+
+    const handleDetailClose = () =>{
+        setDetailDialogOpen(false)
+    }
+
+    const handleFileChange = (event) => {
+        setSelectedFile(event.target.files[0]);
+      };
+      
+    const handleUnlockOpen = (doorId) => {
+        setCurrentDoorId(doorId);
+        setUnlockDialogOpen(true);
+    };
+    
+    const handleUnlockClose = () => {
+        setUnlockDialogOpen(false);
+        setSelectedFile(null);
+        setCurrentDoorId(null);
+    };
+
+    const handleUnlock = async () => {
+        if (!selectedFile || !currentDoorId) {
+            setSnackbarMessage("Vui lòng chọn file hình ảnh vân tay");
+            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
+            return;
+        }
+        
+        try {
+            const result = await verifyFingerprint(currentDoorId, selectedFile);
+            if (result.message === 'Unlock successful!') {
+            setSnackbarMessage(`Mở cửa thành công! Thành viên: ${result.label}`);
+            setSnackbarSeverity("success");
+            } else {
+            setSnackbarMessage("Mở cửa thất bại! Không tìm thấy vân tay phù hợp.");
+            setSnackbarSeverity("error");
+            }
+        } catch (error) {
+            setSnackbarMessage("Có lỗi xảy ra khi xác thực vân tay");
+            setSnackbarSeverity("error");
+        }
+        
+        setSnackbarOpen(true);
+        handleUnlockClose();
+    };
+
     return (
         <div style={{ padding: '20px' }}>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
@@ -147,8 +221,8 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                 <TableCell>
                                         <Button variant="contained" onClick={() => handleOpen(door)} style={{ marginRight: '10px' }}>Sửa</Button>
                                         <Button variant="contained" color="secondary" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Đăng ký vân tay</Button>
-                                        <Button variant="contained" color="secondary" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Chi tiết</Button>
-                                        <Button variant="contained" color="success" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Mở cửa</Button>
+                                        <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Chi tiết</Button>
+                                        <Button variant="contained" color="success" onClick={() => handleUnlockOpen(door.id)} style={{ marginRight: '10px' }}>Mở cửa</Button>
                                         <Button variant="contained" color="error" onClick={() => handleDelete(door.id)}>Xóa</Button>
                                         
                                 </TableCell>
@@ -185,6 +259,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                     <Button onClick={handleSubmit} color="primary">Lưu</Button>
                 </DialogActions>
             </Dialog>
+            {/* Dialog for Fingerprint Registration */}
             <Dialog open={formFingerprintRegistration} onClose = {handleCloseFingerprintRegistration}>
                         <DialogTitle>Đằng ký dấu vân tay</DialogTitle>
                         <DialogContent>
@@ -208,6 +283,79 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                             <Button onClick={handleSubmitFingerprintRegistration} color="primary">Lưu</Button>
                         </DialogActions>
             </Dialog>
+
+            {/* Dialog for Door Members and History */}
+            <Dialog open={detailDialogOpen} onClose={handleDetailClose} maxWidth="md" fullWidth>
+                <DialogTitle>Chi tiết cửa</DialogTitle>
+                <DialogContent>
+                    <Typography variant="h6">Danh sách thành viên:</Typography>
+                    <TableContainer style={{ marginBottom: '20px' }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>ID</TableCell>
+                                    <TableCell>Tên thành viên</TableCell>
+                                    <TableCell>Dấu vân tay</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {doorMembers.map((member) => (
+                                    <TableRow key={member.id}>
+                                        <TableCell>{member.id}</TableCell>
+                                        <TableCell>{member.name}</TableCell>
+                                        <TableCell>{member.fingerprint}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                    <Typography variant="h6">Lịch sử:</Typography>
+                    <TableContainer>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>STT</TableCell>
+                                    <TableCell>Thời gian</TableCell>
+                                    <TableCell>Tên Cửa</TableCell>
+                                    <TableCell>Tên Thành viên</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {doorHistory.map((history, index) => (
+                                    <TableRow key={history.id}>
+                                        <TableCell>{index + 1}</TableCell>
+                                        <TableCell>{new Date(history.time).toLocaleString()}</TableCell>
+                                        <TableCell>{history.detailVerify?.door?.doorName}</TableCell>
+                                        <TableCell>{history.detailVerify?.member?.name}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDetailClose} color="primary">Đóng</Button>
+                </DialogActions>
+            </Dialog>
+            {/* Dialog for Unlock Door */}
+            <Dialog open={unlockDialogOpen} onClose={handleUnlockClose}>
+                <DialogTitle>Mở cửa bằng vân tay</DialogTitle>
+                <DialogContent>
+                    <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{ marginBottom: '20px' }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleUnlockClose} color="primary">Hủy</Button>
+                    <Button onClick={handleUnlock} color="primary">Xác nhận</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Snackbar for notifications */}
             <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
                 <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
                     {snackbarMessage}
