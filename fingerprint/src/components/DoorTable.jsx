@@ -17,6 +17,9 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
+    const [itemType, setItemType] = useState('');
 
     //
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
@@ -239,6 +242,12 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         setSnackbarOpen(true);
     }
 
+    const openConfirmDeleteDialog  = (data,type) =>{
+        setItemToDelete(data);
+        setItemType(type);
+        setConfirmDeleteOpen(true);
+    }
+
     return (
         <div style={{ padding: '20px' }}>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
@@ -276,7 +285,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                         <Button variant="contained" color="secondary" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Đăng ký vân tay</Button>
                                         <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Chi tiết</Button>
                                         <Button variant="contained" color="success" onClick={() => handleUnlockOpen(door.id)} style={{ marginRight: '10px' }}>Mở cửa</Button>
-                                        <Button variant="contained" color="error" onClick={() => handleDelete(door.id)}>Xóa</Button>
+                                        <Button variant="contained" color="error" onClick={() => openConfirmDeleteDialog(door.id, "door")}>Xóa</Button>
                                         
                                 </TableCell>
                             </TableRow>
@@ -335,6 +344,25 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                             <Button onClick={handleCloseFingerprintRegistration} color="primary">Hủy</Button>
                             <Button onClick={handleSubmitFingerprintRegistration} color="primary">Lưu</Button>
                         </DialogActions>
+            </Dialog>
+
+            {/* Dialog for confirm delete */}
+            <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
+                <DialogTitle>Xác Nhận Xóa</DialogTitle>
+                <DialogContent>
+                    <Typography>Bạn có chắc chắn muốn xóa {itemType === 'door' ? 'cửa này' : 'thành viên này'} không?</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmDeleteOpen(false)} color="primary">Hủy</Button>
+                    <Button onClick={() => {
+                        if (itemType === 'door') {
+                            handleDelete(itemToDelete); // Gọi hàm xóa cửa
+                        } else if (itemType === 'member') {
+                            handleDeleteMember(itemToDelete); // Gọi hàm xóa thành viên
+                        }
+                        setConfirmDeleteOpen(false); // Đóng dialog
+                    }} color="primary">Xóa</Button>
+                </DialogActions>
             </Dialog>
 
             {/* Dialog for Door Members and History */}
