@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, Autocomplete, } from "@mui/material";
+import React, { useEffect, useState, useCallback } from "react";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, Autocomplete, InputAdornment } from "@mui/material";
 import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify,getMembersByDoor, getHistoryByDoor, verifyFingerprint, deleteDetailVerify, ResetFingerPrint, getMemberForDoor  } from "../api/services";
 import MuiAlert from '@mui/material/Alert';
+import { debounce } from 'lodash';
+import SearchIcon from '@mui/icons-material/Search';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -20,6 +22,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [itemType, setItemType] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     //
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
@@ -248,6 +251,22 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         setConfirmDeleteOpen(true);
     }
 
+    const debouncedSearch = useCallback(
+        debounce((searchValue) => {
+          setSearchTerm(searchValue);
+        }, 300),
+        []
+      );
+
+    const handleSearchChange = (event) => {
+        debouncedSearch(event.target.value);
+    };
+
+    const filteredDoors = doors.filter(door => 
+        door.doorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        door.location.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
     return (
         <div style={{ padding: '20px' }}>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
@@ -264,6 +283,22 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                     <Button variant="contained" color="error" onClick={() => handleFingerPrint()}>Reset Fingerprint</Button>
                 </Grid>
             </Grid>
+            <TextField
+                label="Tìm kiếm theo tên cửa và vị trí"
+                variant="outlined"
+                onChange={handleSearchChange}
+                style={{ marginBottom: '20px', width: '100%' }}
+                InputProps={{
+                    startAdornment: (
+                    <InputAdornment position="start">
+                        <SearchIcon />
+                    </InputAdornment>
+                    ),
+                }}
+                />
+                <Typography variant="subtitle1" style={{ marginBottom: '10px' }}>
+                Tìm thấy {filteredDoors.length} kết quả
+                </Typography>
             <TableContainer>
                 <Table>
                     <TableHead>
@@ -275,7 +310,14 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {doors.map((door) => (
+                    {filteredDoors.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={4} align="center">
+                            Không tìm thấy cửa nào phù hợp
+                            </TableCell>
+                        </TableRow>
+                        ) : (
+                            filteredDoors.map((door) => (
                             <TableRow key={door.id}>
                                 <TableCell>{door.id}</TableCell>
                                 <TableCell>{door.doorName}</TableCell>
@@ -289,7 +331,9 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                         
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ))
+                        )}
+                        
                     </TableBody>
                 </Table>
             </TableContainer>
