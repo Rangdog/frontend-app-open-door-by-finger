@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, Autocomplete, InputAdornment } from "@mui/material";
-import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify,getMembersByDoor, getHistoryByDoor, verifyFingerprint, deleteDetailVerify, ResetFingerPrint, getMemberForDoor  } from "../api/services";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, Autocomplete, InputAdornment, Select, MenuItem  } from "@mui/material";
+import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify,getMembersByDoor, getHistoryByDoor, verifyFingerprint, deleteDetailVerify, ResetFingerPrint, getMemberForDoor, verifyFingerprintByModel2  } from "../api/services";
 import MuiAlert from '@mui/material/Alert';
 import { debounce } from 'lodash';
 import SearchIcon from '@mui/icons-material/Search';
@@ -32,6 +32,8 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
     const [currentDoorId, setCurrentDoorId] = useState(null);
+
+    const [selectedModel, setSelectedModel] = useState('model1'); // State to store selected model
 
     const fetchDoors = async () => {
         const data = await getDoors();
@@ -78,17 +80,12 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
 
     const handleFingerPrint = async() =>{
         try{
-            const result = await ResetFingerPrint(doorId); 
-            if (result.message && result.message.includes('Fingerprint data and database have been reset successfully')) {
-                setSnackbarMessage(result.message);  
-                setSnackbarSeverity("success");
-            } else if (result.message.includes('Failed to reset fingerprint data.')) {
-                setSnackbarMessage(result.message);
-                setSnackbarSeverity("error");
-            }
+            const result = await ResetFingerPrint(); 
+            setSnackbarMessage("Thành công");  
+            setSnackbarSeverity("success");
         }
         catch(error){
-            setSnackbarMessage("Có lỗi xảy ra");
+            setSnackbarMessage("Có lỗi xảy ra: " + error);
             setSnackbarSeverity("error");
         }
         fetchDoors();
@@ -196,38 +193,74 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
     };
 
     const handleUnlock = async () => {
-        if (!selectedFile || !currentDoorId) {
-            setSnackbarMessage("Vui lòng chọn file hình ảnh vân tay");
-            setSnackbarSeverity("error");
-            setSnackbarOpen(true);
-            return;
-        }
-        
-        try {
-            const result = await verifyFingerprint(currentDoorId, selectedFile);
-            console.log(result.message)
-            console.log(result.label)
-            console.log(result.message === 'Mở cửa thành công! Xin chào ' + result.label)
-            // Kiểm tra phản hồi từ API
-            if (result.message && result.message.includes('Mở cửa thành công! Xin chào')) {
-                setSnackbarMessage(result.message);  // Sử dụng thông báo từ server
-                setSnackbarSeverity("success");
-            } else if (result.message === 'Bạn không có quyền mở cửa này.') {
-                setSnackbarMessage(result.message); // Thông báo không có quyền
+        if(selectedModel === 'model1'){
+            if (!selectedFile || !currentDoorId) {
+                setSnackbarMessage("Vui lòng chọn file hình ảnh vân tay");
                 setSnackbarSeverity("error");
-            } else if (result.message === 'Dấu vân tay của bạn chưa có trong cơ sở dữ liệu.') {
-                setSnackbarMessage(result.message); // Thông báo không tìm thấy vân tay
-                setSnackbarSeverity("error");
-            } else {
-                setSnackbarMessage("Mở cửa thất bại! Lỗi không xác định.");
+                setSnackbarOpen(true);
+                return;
+            }
+            
+            try {
+                const result = await verifyFingerprint(currentDoorId, selectedFile);
+                console.log(result.message)
+                console.log(result.label)
+                console.log(result.message === 'Mở cửa thành công! Xin chào ' + result.label)
+                // Kiểm tra phản hồi từ API
+                if (result.message && result.message.includes('Mở cửa thành công! Xin chào')) {
+                    setSnackbarMessage(result.message);  // Sử dụng thông báo từ server
+                    setSnackbarSeverity("success");
+                } else if (result.message === 'Bạn không có quyền mở cửa này.') {
+                    setSnackbarMessage(result.message); // Thông báo không có quyền
+                    setSnackbarSeverity("error");
+                } else if (result.message === 'Dấu vân tay của bạn chưa có trong cơ sở dữ liệu.') {
+                    setSnackbarMessage(result.message); // Thông báo không tìm thấy vân tay
+                    setSnackbarSeverity("error");
+                } else {
+                    setSnackbarMessage("Mở cửa thất bại! Lỗi không xác định.");
+                    setSnackbarSeverity("error");
+                }
+            } catch (error) {
+                setSnackbarMessage("Có lỗi xảy ra khi xác thực vân tay");
                 setSnackbarSeverity("error");
             }
-        } catch (error) {
-            setSnackbarMessage("Có lỗi xảy ra khi xác thực vân tay");
-            setSnackbarSeverity("error");
+            setSnackbarOpen(true);
+            handleUnlockClose();
         }
-        setSnackbarOpen(true);
-        handleUnlockClose();
+        else{
+            if (!selectedFile || !currentDoorId) {
+                setSnackbarMessage("Vui lòng chọn file hình ảnh vân tay");
+                setSnackbarSeverity("error");
+                setSnackbarOpen(true);
+                return;
+            }
+            
+            try {
+                const result = await verifyFingerprintByModel2(currentDoorId, selectedFile);
+                console.log(result.message)
+                console.log(result.label)
+                console.log(result.message === 'Mở cửa thành công! Xin chào ' + result.label)
+                // Kiểm tra phản hồi từ API
+                if (result.message && result.message.includes('Mở cửa thành công! Xin chào')) {
+                    setSnackbarMessage(result.message);  // Sử dụng thông báo từ server
+                    setSnackbarSeverity("success");
+                } else if (result.message === 'Bạn không có quyền mở cửa này.') {
+                    setSnackbarMessage(result.message); // Thông báo không có quyền
+                    setSnackbarSeverity("error");
+                } else if (result.message === 'Dấu vân tay của bạn chưa có trong cơ sở dữ liệu.') {
+                    setSnackbarMessage(result.message); // Thông báo không tìm thấy vân tay
+                    setSnackbarSeverity("error");
+                } else {
+                    setSnackbarMessage("Mở cửa thất bại! Lỗi không xác định.");
+                    setSnackbarSeverity("error");
+                }
+            } catch (error) {
+                setSnackbarMessage("Có lỗi xảy ra khi xác thực vân tay");
+                setSnackbarSeverity("error");
+            }
+            setSnackbarOpen(true);
+            handleUnlockClose();
+        }
     };
 
     const handleDeleteDetailVerify = async (door_Id, member_Id) => {
@@ -469,11 +502,23 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
             <Dialog open={unlockDialogOpen} onClose={handleUnlockClose}>
                 <DialogTitle>Mở cửa bằng vân tay</DialogTitle>
                 <DialogContent>
+                    <Typography variant="subtitle1" style={{ marginBottom: '10px' }}>
+                        Chọn model:
+                    </Typography>
+                    <Select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        fullWidth
+                        style={{ marginBottom: '20px' }}
+                    >
+                        <MenuItem value="model1">Model 1</MenuItem>
+                        <MenuItem value="model2">Model 2</MenuItem>
+                    </Select>
                     <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    style={{ marginBottom: '20px' }}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        style={{ marginBottom: '20px' }}
                     />
                 </DialogContent>
                 <DialogActions>

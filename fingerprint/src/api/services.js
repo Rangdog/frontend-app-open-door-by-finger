@@ -123,6 +123,24 @@ export const verifyFingerprint = async (doorId, file) => {
     }
   };
 
+  export const verifyFingerprintByModel2 = async (doorId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('doorId', doorId);
+  
+    try {
+      const response = await axios.post(`${API_URL}/door/${doorId}/verify2`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error verifying fingerprint:', error);
+      throw error;
+    }
+  };
+
 
 
 // Fetch members associated with a specific door
@@ -139,7 +157,7 @@ export const getHistoryByDoor = async (doorId) => {
 
 
 export const ResetFingerPrint = async () => {
-    const response = await axiosInstance.get('/other');
+    const response = await axiosInstance.post('/other');
     return response.data;
 }
 
