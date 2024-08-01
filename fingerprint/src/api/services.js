@@ -155,6 +155,10 @@ export const getHistoryByDoor = async (doorId) => {
     return response.data;
 };
 
+export const getHistoryByMemberID = async (memberID) => {
+    const response = await axiosInstance.get(`/history/member/${memberID}`);
+    return response.data;
+};
 
 export const ResetFingerPrint = async () => {
     const response = await axiosInstance.post('/other');

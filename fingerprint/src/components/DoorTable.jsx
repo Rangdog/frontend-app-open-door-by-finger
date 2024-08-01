@@ -9,7 +9,7 @@ const Alert = React.forwardRef(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-const DoorTable = ({ onManageMembers, onViewHistory }) => {
+const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor }) => {
     const [doors, setDoors] = useState([]);
     const [members, setMembers] = useState([]);
     const [open, setOpen] = useState(false);
@@ -304,14 +304,17 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
         <div style={{ padding: '20px' }}>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
                 <Grid item>
+                    <Button variant="contained" onClick={onViewDoor}>Quản lý cửa</Button>
+                </Grid>
+                <Grid item>
                     <Button variant="contained" onClick={onManageMembers}>Quản lý thành viên</Button>
                 </Grid>
                 <Grid item>
                     <Button variant="contained" onClick={onViewHistory}>Quản lý lịch sử</Button>
                 </Grid>
-                <Grid item>
+                {/* <Grid item>
                     <Button variant="contained" color="success" onClick={() => handleOpen()}>Thêm Cửa</Button>
-                </Grid>
+                </Grid> */}
                 <Grid item>
                     <Button variant="contained" color="error" onClick={() => handleFingerPrint()}>Reset Fingerprint</Button>
                 </Grid>
@@ -356,12 +359,11 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                 <TableCell>{door.doorName}</TableCell>
                                 <TableCell>{door.location}</TableCell>
                                 <TableCell>
-                                        <Button variant="contained" onClick={() => handleOpen(door)} style={{ marginRight: '10px' }}>Sửa</Button>
+                                        {/* <Button variant="contained" onClick={() => handleOpen(door)} style={{ marginRight: '10px' }}>Sửa</Button> */}
                                         <Button variant="contained" color="secondary" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Đăng ký vân tay</Button>
                                         <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Chi tiết</Button>
                                         <Button variant="contained" color="success" onClick={() => handleUnlockOpen(door.id)} style={{ marginRight: '10px' }}>Mở cửa</Button>
-                                        <Button variant="contained" color="error" onClick={() => openConfirmDeleteDialog(door.id, "door")}>Xóa</Button>
-                                        
+                                        {/* <Button variant="contained" color="error" onClick={() => openConfirmDeleteDialog(door.id, "door")}>Xóa</Button> */}        
                                 </TableCell>
                             </TableRow>
                         ))
@@ -469,7 +471,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                             </TableBody>
                         </Table>
                     </TableContainer>
-
+{/* 
                     <Typography variant="h6">Lịch sử:</Typography>
                     <TableContainer>
                         <Table>
@@ -492,7 +494,7 @@ const DoorTable = ({ onManageMembers, onViewHistory }) => {
                                 ))}
                             </TableBody>
                         </Table>
-                    </TableContainer>
+                    </TableContainer> */}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleDetailClose} color="primary">Đóng</Button>

@@ -4,6 +4,7 @@ import DoorTable from "./components/DoorTable";
 import MemberManagement from "./components/MemberManagement";
 import HistoryManagement from "./components/HistoryManagement";
 import DetailVerify from "./components/DetailVerify";
+import DoorManagement from "./components/DoorManagement";
 
 const App = () => {
     const [currentView, setCurrentView] = useState("doors"); // Trạng thái hiện tại (cửa, thành viên, lịch sử)
@@ -12,7 +13,7 @@ const App = () => {
     const renderView = () => {
         switch (currentView) {
             case "doors":
-                return <DoorTable onManageMembers={() => setCurrentView("members")} onViewHistory={() => setCurrentView("history")} />;
+                return <DoorTable onManageMembers={() => setCurrentView("members")} onViewHistory={() => setCurrentView("history")} onViewDoor = {() => setCurrentView("manageDoor")}/>;
             case "members":
                 return <MemberManagement onBack={() => setCurrentView("doors")} />;
             case "history":
@@ -22,6 +23,8 @@ const App = () => {
                         setCurrentView("detail");
                     }} onBack={() => setCurrentView("doors")} />
                 );
+            case "manageDoor":
+                return <DoorManagement onBack={() => setCurrentView("doors")}/>
             case "detail":
                 return <DetailVerify historyId={selectedHistoryId} onBack={() => setCurrentView("history")} />;
             default:

@@ -1,128 +1,110 @@
 import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography  } from "@mui/material";
-import { deleteMember, getMembers, updateMember, createMember, getHistoryByMemberID } from "../api/services";
+import { getDoors, deleteDoor, updateDoor, createDoor, getHistoryByDoor } from "../api/services";
 import MuiAlert from '@mui/material/Alert';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-
-const MemberManagement = ({ onBack }) => { // Nhận prop onBack
-    const [members, setMembers] = useState([]);
+const DoorManagement = ({onBack}) => {
+    const [doors, setDoors] = useState([]);
     const [open, setOpen] = useState(false);
-    const [formData, setFormData] = useState({ id: null, fingerprint: "", name: "" });
+    const [formData, setFormData] = useState({ id: null, doorName: "", location: "" });
     const [imagefile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
+    const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+    const [doorHistory, setDoorHistory] = useState([]);
+    const [currentDoorId, setCurrentDoorId] = useState(null);
 
-    const [historiesOpen, setHistoriesOpen] = useState(false);
-    const [memberHistory, setMemberHistory] = useState([]);
-    const [currentMemberID, setCurrentMemberID] = useState(null);
-
-    const fetchMembers = async () => {
-        const data = await getMembers();
-        setMembers(data);
-    };
-
-    const fetchMemberHistory = async(memberID) =>{
+    const fetchDoorDetails = async(doorId) =>{
         try{
-            const historyData = await getHistoryByMemberID(memberID); 
+            const historyData = await getHistoryByDoor(doorId); 
             console.log(historyData)
-            setMemberHistory(historyData);
+            setDoorHistory(historyData);
         }
         catch(error){
             console.log("Lỗi lấy dữ liệu: ", error.message)
         }
     }
 
+    const fetchDoors = async () => {
+        const data = await getDoors();
+        setDoors(data);
+    };
+
     useEffect(() => {
-        fetchMembers();
+        fetchDoors();
     }, []);
 
-    const handleOpen = (member = {id: null, fingerprint: "", name:""}) => {
-        setFormData(member);
+    const handleOpen = (door = { id: null, doorName: "", location: "" }) => {
+        setFormData(door);
         setOpen(true);
     }
 
     const handleClose = () => {
         setOpen(false);
-        setFormData({id:null, fingerprint: "", name: ""});
+        setFormData({ id: null, doorName: "", location: "" }); // Reset form
     }
 
-    const handleChange = (e) =>{
-        const {name,value} = e.target;
+    const handleChange = (e) => {
+        const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-    }
+    };
 
     const handleSubmit = async(e) =>{
         e.preventDefault();
-        const formDataSend = new FormData()
-        formDataSend.append("fingerprint", formData.fingerprint);
-        formDataSend.append("name", formData.name);
-        console.log("Image File Name:", imagefile.name);
-        console.log("Image File Type:", imagefile.type);
-        if(imagefile){
-            formDataSend.append("file", imagefile);
-        }
-        for (const [key, value] of formDataSend.entries()) {
-            console.log(`${key}: ${value}`);
-        }
         try{
-            if(formData.id){
-                // Update member
-                await updateMember(formData.id, formDataSend)
-                setSnackbarMessage("Cập nhật thành viên thành công!");
-            }
-            else{
-                // Create member
-                await createMember(formDataSend)
-                setSnackbarMessage("Thêm thành viên thành công!");
+            if (formData.id) {
+                // Update door
+                await updateDoor(formData.id, formData);
+                setSnackbarMessage("Cập nhật cửa thành công!");
+            } else {
+                // Create door
+                await createDoor(formData);
+                setSnackbarMessage("Thêm cửa thành công!");
             }
             setSnackbarSeverity("success");
         }
-        catch{
+        catch (err){
+            console.log(err);
             setSnackbarMessage("Có lỗi xảy ra!");
             setSnackbarSeverity("error");
         }
         handleClose();
-        fetchMembers();
+        fetchDoors(); // Refresh the list
         setSnackbarOpen(true);
     }
 
     const handleDelete = async(id) =>{
         try{
-            await deleteMember(id);
-            setSnackbarMessage("Xóa thành viên thành công!");
+            await deleteDoor(id);
+            setSnackbarMessage("Xóa cửa thành công!");
             setSnackbarSeverity("success");
         }
-        catch{
+        catch(err){
             setSnackbarMessage("Có lỗi xảy ra khi xóa!");
             setSnackbarSeverity("error");
         }
-        fetchMembers();
+        fetchDoors(); // Refresh the list
         setSnackbarOpen(true);
     }
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
 
-    const handleImageChange = (e) =>{
-        const file = e.target.files[0];
-        setImageFile(file)
-        setImagePreview(URL.createObjectURL(file))
-    }
 
-    const handleHistoriesOpen = (member) =>{
-        setCurrentMemberID(member.id);
-        fetchMemberHistory(member.id)
-        setHistoriesOpen(true);
+    const handleDetailOpen = (door) =>{
+        setCurrentDoorId(door.id);
+        fetchDoorDetails(door.id)
+        setDetailDialogOpen(true);
     }
     const handleDetailClose = () =>{
-        setHistoriesOpen(false)
+        setDetailDialogOpen(false)
     }
     return (
         <div style={{ padding: '20px' }}>
@@ -131,7 +113,7 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                     <Button variant="contained" onClick={onBack}>Quay lại</Button>
                 </Grid>
                 <Grid item>
-                    <Button variant="contained" onClick={() => handleOpen()}>Thêm thành viên</Button>
+                    <Button variant="contained" color="success" onClick={() => handleOpen()}>Thêm cửa</Button>
                 </Grid>
             </Grid>
             <TableContainer>
@@ -139,21 +121,21 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                     <TableHead>
                         <TableRow>
                             <TableCell>ID</TableCell>
-                            <TableCell>Dấu vân tay</TableCell>
-                            <TableCell>Tên</TableCell>
+                            <TableCell>Tên cửa</TableCell>
+                            <TableCell>Vị trí</TableCell>
                             <TableCell>Hành Động</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {members.map((member) => (
-                            <TableRow key={member.id}>
-                                <TableCell>{member.id}</TableCell>
-                                <TableCell>{member.fingerprint}</TableCell>
-                                <TableCell>{member.name}</TableCell>
+                        {doors.map((door) => (
+                            <TableRow key={door.id}>
+                                <TableCell>{door.id}</TableCell>
+                                <TableCell>{door.doorName}</TableCell>
+                                <TableCell>{door.location}</TableCell>
                                 <TableCell>
-                                        <Button variant="contained" onClick={() => handleOpen(member)} style={{ marginRight: '10px' }}>Sửa</Button>
-                                        <Button variant="contained" color="secondary" onClick={() => handleHistoriesOpen(member)} style={{ marginRight: '10px' }}>Lịch sử</Button>
-                                        <Button variant="contained" color="error" onClick={() => handleDelete(member.id)}>Xóa</Button>
+                                        <Button variant="contained" onClick={() => handleOpen(door)} style={{ marginRight: '10px' }}>Sửa</Button>
+                                        <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Lịch sử</Button>
+                                        <Button variant="contained" color="error" onClick={() => handleDelete(door.id)}>Xóa</Button>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -161,41 +143,27 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                 </Table>
             </TableContainer>
             <Dialog open={open} onClose={handleClose}>
-                <DialogTitle>{formData.id ? "Cập Nhật Thành Viên" : "Thêm Thành Viên"}</DialogTitle>
+                <DialogTitle>{formData.id ? "Cập Nhập Cửa: " + formData.doorName + " - " + formData.id  : "Thêm Cửa"}</DialogTitle>
                 <DialogContent>
-                    <TextField
-                        margin="dense"
-                        name="fingerprint"
-                        label="mã dấu vân tay"
-                        type="number"
-                        fullWidth
-                        value={formData.fingerprint}
-                        onChange={handleChange}
-                        InputProps={{
-                            readOnly: true,
-                        }}
-                    />
                     <TextField
                         autoFocus
                         margin="dense"
-                        name="name"
-                        label="Tên Thành Viên"
+                        name="doorName"
+                        label="Tên Cửa"
                         type="text"
                         fullWidth
-                        value={formData.name}
+                        value={formData.doorName}
                         onChange={handleChange}
                     />
-                    {!formData.id ? <div style={{marginTop: '20px'}}>
-                        <input type="file" accept="image/*" onChange={handleImageChange} style={{display: 'block', marginTop: '10px'}}/>
-                        <Typography variant="caption" color="textSecondary">
-                            Chọn hình ảnh dấu vân tay (Chỉ hỗ trợ hình ảnh).
-                        </Typography>
-                        {imagePreview && (<img src = {imagePreview} alt="preview" style={{marginTop : '10px', width:'96px', maxHeight:'96px', objectFit:'cover'}}
-                            
-                            />
-                        )}
-                    </div>
-                    : ""}
+                    <TextField
+                        margin="dense"
+                        name="location"
+                        label="Vị Trí"
+                        type="text"
+                        fullWidth
+                        value={formData.location}
+                        onChange={handleChange}
+                    />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleClose} color="primary">Hủy</Button>
@@ -203,8 +171,8 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                 </DialogActions>
             </Dialog>
             {/* Dialog for Door History */}
-            <Dialog open={historiesOpen} onClose={handleDetailClose} maxWidth="md" fullWidth>
-                <DialogTitle>Lịch sử thành viên: {currentMemberID}</DialogTitle>
+            <Dialog open={detailDialogOpen} onClose={handleDetailClose} maxWidth="md" fullWidth>
+                <DialogTitle>Lịch sử cửa {currentDoorId}</DialogTitle>
                 <DialogContent>
                     <Typography variant="h6">Lịch sử:</Typography>
                     <TableContainer>
@@ -218,7 +186,7 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {memberHistory.map((history, index) => (
+                                {doorHistory.map((history, index) => (
                                     <TableRow key={history.id}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{new Date(history.time).toLocaleString()}</TableCell>
@@ -241,6 +209,5 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
             </Snackbar>
         </div>
     );
-};
-
-export default MemberManagement;
+}
+export default DoorManagement;
