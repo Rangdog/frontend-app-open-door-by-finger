@@ -166,7 +166,7 @@ const MemberManagement = ({ onBack }) => { // Nhận prop onBack
                     <TextField
                         margin="dense"
                         name="fingerprint"
-                        label="mã dấu vân tay"
+                        label="Mã Dấu Vân Tay"
                         type="number"
                         fullWidth
                         value={formData.fingerprint}
