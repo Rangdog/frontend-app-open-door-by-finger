@@ -9,7 +9,7 @@ const Alert = React.forwardRef(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor }) => {
+const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor, onViewHistoryFalse }) => {
     const [doors, setDoors] = useState([]);
     const [members, setMembers] = useState([]);
     const [open, setOpen] = useState(false);
@@ -221,8 +221,29 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor }) => {
                     setSnackbarSeverity("error");
                 }
             } catch (error) {
-                setSnackbarMessage("Có lỗi xảy ra khi xác thực vân tay");
-                setSnackbarSeverity("error");
+                console.log("Error verifying fingerprint:", error);
+
+                // Check if response is available
+                if (error.response) {
+                    // The server responded with a status code that falls out of the range of 2xx
+                    console.log("Response data:", error.response.data);
+                    console.log("Response status:", error.response.status);
+                    console.log("Response headers:", error.response.headers);
+                    
+                    // Use the response message for the snackbar
+                    setSnackbarMessage(error.response.data.message || "Có lỗi xảy ra khi xác thực vân tay");
+                    setSnackbarSeverity("error");
+                } else if (error.request) {
+                    // The request was made but no response was received
+                    console.log("Request made but no response received:", error.request);
+                    setSnackbarMessage("Có lỗi xảy ra khi xác thực vân tay: Không nhận được phản hồi từ máy chủ.");
+                    setSnackbarSeverity("error");
+                } else {
+                    // Something happened in setting up the request that triggered an Error
+                    console.log("Error message:", error.message);
+                    setSnackbarMessage("Có lỗi xảy ra khi xác thực vân tay: " + error.message);
+                    setSnackbarSeverity("error");
+                }
             }
             setSnackbarOpen(true);
             handleUnlockClose();
@@ -278,9 +299,7 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor }) => {
         setSnackbarOpen(true);
     }
 
-    const openConfirmDeleteDialog  = (data,type) =>{
-        setItemToDelete(data);
-        setItemType(type);
+    const openConfirmDeleteDialog  = () =>{
         setConfirmDeleteOpen(true);
     }
 
@@ -310,13 +329,16 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor }) => {
                     <Button variant="contained" onClick={onManageMembers}>Quản lý thành viên</Button>
                 </Grid>
                 <Grid item>
-                    <Button variant="contained" onClick={onViewHistory}>Quản lý lịch sử</Button>
+                    <Button variant="contained" onClick={onViewHistory}>Lịch sử ra vào</Button>
+                </Grid>
+                <Grid item>
+                    <Button variant="contained" onClick={onViewHistoryFalse}>Lịch sử truy cập thất bại</Button>
                 </Grid>
                 {/* <Grid item>
                     <Button variant="contained" color="success" onClick={() => handleOpen()}>Thêm Cửa</Button>
                 </Grid> */}
                 <Grid item>
-                    <Button variant="contained" color="error" onClick={() => handleFingerPrint()}>Reset Fingerprint</Button>
+                    <Button variant="contained" color="error" onClick={() => openConfirmDeleteDialog()}>Reset Fingerprint</Button>
                 </Grid>
             </Grid>
             <TextField
@@ -427,18 +449,14 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor }) => {
 
             {/* Dialog for confirm delete */}
             <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
-                <DialogTitle>Xác Nhận Xóa</DialogTitle>
+                <DialogTitle>Xác Nhận Reset</DialogTitle>
                 <DialogContent>
-                    <Typography>Bạn có chắc chắn muốn xóa {itemType === 'door' ? 'cửa này' : 'thành viên này'} không?</Typography>
+                    <Typography>Bạn có chắc chắn muốn reset toàn bộ không?</Typography>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setConfirmDeleteOpen(false)} color="primary">Hủy</Button>
                     <Button onClick={() => {
-                        if (itemType === 'door') {
-                            handleDelete(itemToDelete); // Gọi hàm xóa cửa
-                        } else if (itemType === 'member') {
-                            handleDeleteMember(itemToDelete); // Gọi hàm xóa thành viên
-                        }
+                        handleFingerPrint()
                         setConfirmDeleteOpen(false); // Đóng dialog
                     }} color="primary">Xóa</Button>
                 </DialogActions>

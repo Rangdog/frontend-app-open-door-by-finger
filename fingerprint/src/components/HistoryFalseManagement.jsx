@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, Grid } from "@mui/material";
-import { getHistories } from "../api/services";
+import { getHistoriesFalse } from "../api/services";
 import { format } from 'date-fns'; // Import date-fns
 
-const HistoryFalseManagement = ({ onViewDetail, onBack }) => { // Nhận prop onBack
+const HistoryManagement = ({ onViewDetail, onBack }) => { // Nhận prop onBack
     const [history, setHistory] = useState([]);
     const [searchMode, setSearchMode] = useState("door"); // "door" hoặc "member"
     const [searchTerm, setSearchTerm] = useState("");
     useEffect(() => {
         const fetchHistory = async () => {
-            const data = await getHistories();
+            const data = await getHistoriesFalse();
             setHistory(data);
             console.log(data)
         };
@@ -20,13 +20,11 @@ const HistoryFalseManagement = ({ onViewDetail, onBack }) => { // Nhận prop on
     const filteredHistory = history.filter(item => {
         if (searchMode === "door") {
             return (
-                item.detailVerify.door.doorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.detailVerify.door.id.toString().includes(searchTerm)
+                item.doorId.toString().toLowerCase().includes(searchTerm.toLowerCase()) // Tìm kiếm theo ID cửa
             );
         } else if (searchMode === "member") {
             return (
-                item.detailVerify.member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.detailVerify.member.id.toString().includes(searchTerm)
+                item.label.toLowerCase().includes(searchTerm.toLowerCase()) // Tìm kiếm theo label
             );
         }
         return true; // Không có bộ lọc
@@ -40,14 +38,14 @@ const HistoryFalseManagement = ({ onViewDetail, onBack }) => { // Nhận prop on
             </Grid>
             <div>
                 <Button variant={searchMode === "door" ? "contained" : "outlined"} onClick={() => setSearchMode("door")}>
-                    Tìm kiếm theo cửa
+                    Tìm kiếm theo id cửa
                 </Button>
                 <Button variant={searchMode === "member" ? "contained" : "outlined"} onClick={() => setSearchMode("member")}>
-                    Tìm kiếm theo thành viên
+                    Tìm kiếm theo label
                 </Button>
             </div>
             <TextField
-                label={searchMode === "door" ? "Tên cửa hoặc ID cửa" : "Tên thành viên hoặc ID thành viên"}
+                label={searchMode === "door" ? "Id cửa" : "Label"}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 variant="outlined"
@@ -59,32 +57,27 @@ const HistoryFalseManagement = ({ onViewDetail, onBack }) => { // Nhận prop on
                     <TableHead>
                         <TableRow>
                             <TableCell>ID</TableCell>
-                            <TableCell colSpan={2}>Cửa</TableCell> {/* Gộp 2 cột Tên cửa và ID cửa */}
-                            <TableCell colSpan={2}>Thành viên</TableCell> {/* Gộp 2 cột Tên thành viên và ID thành viên */}
+                            <TableCell>ID cửa</TableCell> 
+                            <TableCell>Label</TableCell>
+                            <TableCell>Độ tương đồng với label</TableCell>
                             <TableCell>Thời gian</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell></TableCell> {/* Ô trống cho ID */}
-                            <TableCell>Tên cửa</TableCell> {/* Tên cửa */}
-                            <TableCell>ID cửa</TableCell> {/* ID cửa */}
-                            <TableCell>Tên thành viên</TableCell> {/* Tên thành viên */}
-                            <TableCell>ID thành viên</TableCell> {/* ID thành viên */}
+                            <TableCell>Lý do</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {filteredHistory.map((item) => (
                             <TableRow key={item.id}>
                                 <TableCell>{item.id}</TableCell>
-                                <TableCell>{item.detailVerify.door.doorName}</TableCell>
-                                <TableCell>{item.detailVerify.door.id}</TableCell>
-                                <TableCell>{item.detailVerify.member.name}</TableCell>
-                                <TableCell>{item.detailVerify.member.id}</TableCell>
+                                <TableCell>{item.doorId}</TableCell>
+                                <TableCell>{item.label}</TableCell>
+                                <TableCell>{item.similarity}</TableCell>
                                 <TableCell>
                                     {
                                         // Sử dụng date-fns để định dạng thời gian
                                         format(new Date(item.time), 'dd/MM/yyyy HH:mm:ss')
                                     }
                                 </TableCell>
+                                <TableCell>{item.reason}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -94,4 +87,4 @@ const HistoryFalseManagement = ({ onViewDetail, onBack }) => { // Nhận prop on
     );
 };
 
-export default HistoryFalseManagement;
+export default HistoryManagement;

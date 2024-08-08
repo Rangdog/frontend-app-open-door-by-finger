@@ -166,10 +166,18 @@ export const ResetFingerPrint = async () => {
 }
 
 export const getMemberForDoor = async (id) => {
-    const response = await axios.get(`${API_URL}/members/getmemberfordoor`, {
+    if(!id){
+        return null;
+    }
+    const response = await axiosInstance.get(`/members/underperformed`, {
         params: {
             doorId: id
         }
     });
+    return response.data;
+}
+
+export const getHistoriesFalse = async () => {
+    const response = await axiosInstance.get('/historyfalse');
     return response.data;
 }
