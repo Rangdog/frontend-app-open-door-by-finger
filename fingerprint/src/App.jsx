@@ -1,16 +1,22 @@
 import React, { useState } from "react";
-import { Container, Typography, AppBar, Toolbar, Button } from "@mui/material";
+import { Container, Typography, AppBar, Toolbar, Button, Alert } from "@mui/material";
 import DoorTable from "./components/DoorTable";
 import MemberManagement from "./components/MemberManagement";
 import HistoryManagement from "./components/HistoryManagement";
 import DetailVerify from "./components/DetailVerify";
 import DoorManagement from "./components/DoorManagement";
 import HistoryFalseManagement from "./components/HistoryFalseManagement";
-
+import { BrowserRouter as Router, Route, Routes, Navigate, Link } from "react-router-dom";
+import Login from "./components/Login";
 const App = () => {
     const [currentView, setCurrentView] = useState("doors"); // Trạng thái hiện tại (cửa, thành viên, lịch sử)
     const [selectedHistoryId, setSelectedHistoryId] = useState(null); // ID lịch sử đã chọn
 
+    const handleLogout = () =>{
+        localStorage.removeItem('token')
+        window.location.href = '/login'
+    }
+    const isAuthenticated = localStorage.getItem('token')
     const renderView = () => {
         switch (currentView) {
             case "doors":
@@ -30,6 +36,8 @@ const App = () => {
                 return <DetailVerify historyId={selectedHistoryId} onBack={() => setCurrentView("history")} />;
             case "historyfalse":
                 return <HistoryFalseManagement onBack={() => setCurrentView("doors")}/>
+            case "login":
+                return <Login />
             default:
                 return <DoorTable onManageMembers={() => setCurrentView("members")} onViewHistory={() => setCurrentView("history")} onViewDoor = {() => setCurrentView("manageDoor")}  onViewHistoryFalse = {() => setCurrentView("historyfalse")}/>;
         }
@@ -51,10 +59,16 @@ const App = () => {
     };
 
     return (
+
         <Container>
             <AppBar position="static">
                 <Toolbar>
-                    <Typography variant="h6">{getTitle()}</Typography>
+                    <Typography variant="h6" style={{flexGrow:1}}>{getTitle()}</Typography>
+                    {isAuthenticated ? <>
+                        <Button color='inherit' onClick={handleLogout}>Logout</Button>
+                    </>:<>
+                        <Button color='inherit' onClick={() => setCurrentView("login")}>Login</Button>
+                    </>}
                 </Toolbar>
             </AppBar>
             {renderView()}

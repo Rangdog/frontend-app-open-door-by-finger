@@ -318,27 +318,32 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor, onViewHistoryFa
         door.doorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         door.location.toLowerCase().includes(searchTerm.toLowerCase())
       );
-
+    const isAuthenticated = localStorage.getItem('token')
     return (
         <div style={{ padding: '20px' }}>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
                 <Grid item>
-                    <Button variant="contained" onClick={onViewDoor}>Quản lý cửa</Button>
+                {isAuthenticated? <Button variant="contained" onClick={onViewDoor}>Quản lý cửa</Button> : <></>}
+                    {/* <Button variant="contained" onClick={onViewDoor}>Quản lý cửa</Button> */}
                 </Grid>
                 <Grid item>
-                    <Button variant="contained" onClick={onManageMembers}>Quản lý thành viên</Button>
+                    {isAuthenticated? <Button variant="contained" onClick={onManageMembers}>Quản lý thành viên</Button> : <></>}
+                    {/* <Button variant="contained" onClick={onManageMembers}>Quản lý thành viên</Button> */}
                 </Grid>
                 <Grid item>
-                    <Button variant="contained" onClick={onViewHistory}>Lịch sử ra vào</Button>
+                    {isAuthenticated? <Button variant="contained" onClick={onViewHistory}>Lịch sử ra vào</Button> : <></>}
+                    {/* <Button variant="contained" onClick={onViewHistory}>Lịch sử ra vào</Button> */}
                 </Grid>
                 <Grid item>
-                    <Button variant="contained" onClick={onViewHistoryFalse}>Lịch sử truy cập thất bại</Button>
+                    {isAuthenticated? <Button variant="contained" onClick={onViewHistoryFalse}>Lịch sử truy cập thất bại</Button> : <></>}
+                    {/* <Button variant="contained" onClick={onViewHistoryFalse}>Lịch sử truy cập thất bại</Button> */}
                 </Grid>
                 {/* <Grid item>
                     <Button variant="contained" color="success" onClick={() => handleOpen()}>Thêm Cửa</Button>
                 </Grid> */}
                 <Grid item>
-                    <Button variant="contained" color="error" onClick={() => openConfirmDeleteDialog()}>Reset Fingerprint</Button>
+                    {isAuthenticated? <Button variant="contained" color="error" onClick={() => openConfirmDeleteDialog()}>Reset Fingerprint</Button> : <></>}
+                    {/* <Button variant="contained" color="error" onClick={() => openConfirmDeleteDialog()}>Reset Fingerprint</Button> */}
                 </Grid>
             </Grid>
             <TextField
@@ -382,8 +387,10 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor, onViewHistoryFa
                                 <TableCell>{door.location}</TableCell>
                                 <TableCell>
                                         {/* <Button variant="contained" onClick={() => handleOpen(door)} style={{ marginRight: '10px' }}>Sửa</Button> */}
-                                        <Button variant="contained" color="secondary" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Đăng ký vân tay</Button>
-                                        <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Chi tiết</Button>
+                                        {isAuthenticated? <Button variant="contained" color="secondary" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Đăng ký vân tay</Button> : <></>}
+                                        {/* <Button variant="contained" color="secondary" onClick={() => fingerprintRegistration(door.id)} style={{ marginRight: '10px' }}>Đăng ký vân tay</Button> */}
+                                        {isAuthenticated? <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Chi tiết</Button> : <></>}
+                                        {/* <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Chi tiết</Button> */}
                                         <Button variant="contained" color="success" onClick={() => handleUnlockOpen(door.id)} style={{ marginRight: '10px' }}>Mở cửa</Button>
                                         {/* <Button variant="contained" color="error" onClick={() => openConfirmDeleteDialog(door.id, "door")}>Xóa</Button> */}        
                                 </TableCell>

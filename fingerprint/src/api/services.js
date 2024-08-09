@@ -1,13 +1,29 @@
 import axios from "axios";
+import axiosInstance from "../api/api";
 
 const API_URL = "http://localhost:8080/api"; // Địa chỉ API của bạn
 
-const axiosInstance = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
+export const login = async(username, password) => {
+    try{
+        const response = await axiosInstance.post("/auth/login", {username, password});
+        console.log(response)
+        return response.data;
     }
-});
+    catch(error){
+        console.log(error);
+        throw (error)
+    }
+}
+
+export const register = async(username, password, email) => {
+    try{
+        const response = await axiosInstance.post("/auth/register", {username, password, email});
+        return response.data;
+    }
+    catch(error){
+        throw (error)
+    }
+}
 // Door Service
 export const getDoors = async () => {
     const response = await axios.get(`${API_URL}/door`);
@@ -22,12 +38,12 @@ export const createDoor = async (doorData) => {
 };
 
 export const updateDoor = async (id, doorData) => {
-    const response = await axios.put(`${API_URL}/door/${id}`, doorData);
+    const response = await axiosInstance.put(`/door/${id}`, doorData);
     return response.data;
 };
 
 export const deleteDoor = async (id) => {
-    await axios.delete(`${API_URL}/door/${id}`);
+    await axiosInstance.delete(`/door/${id}`);
 };
 
 // Member Service
@@ -38,7 +54,7 @@ export const getMembers = async () => {
 
 export const createMember = async (memberData) => {
     console.log(memberData.name)
-    const response = await axios.post(`${API_URL}/members`, memberData, {
+    const response = await axiosInstance.post(`/members`, memberData, {
         headers: {
             'Content-Type' : "multipart/form-data"
         }
@@ -47,7 +63,7 @@ export const createMember = async (memberData) => {
 };
 
 export const updateMember = async (id, memberData) => {
-    const response = await axios.put(`${API_URL}/members/${id}`, memberData,{
+    const response = await axiosInstance.put(`/members/${id}`, memberData,{
         headers: {
             'Content-Type' : "multipart/form-data"
         }
@@ -56,7 +72,7 @@ export const updateMember = async (id, memberData) => {
 };
 
 export const deleteMember = async (id) => {
-    await axios.delete(`${API_URL}/members/${id}`);
+    await axiosInstance.delete(`/members/${id}`);
 };
 
 // History Service
@@ -66,17 +82,17 @@ export const getHistories = async () => {
 };
 
 export const createHistory = async (historyData) => {
-    const response = await axios.post(`${API_URL}/history`, historyData);
+    const response = await axiosInstance.post(`/history`, historyData);
     return response.data;
 };
 
 export const updateHistory = async (id, historyData) => {
-    const response = await axios.put(`${API_URL}/history/${id}`, historyData);
+    const response = await axiosInstance.put(`/history/${id}`, historyData);
     return response.data;
 };
 
 export const deleteHistory = async (id) => {
-    await axios.delete(`${API_URL}/history/${id}`);
+    await axiosInstance.delete(`/history/${id}`);
 };
 
 // Detail Verify Service
@@ -91,12 +107,12 @@ export const createDetailVerify = async (detailVerifyData) => {
 };
 
 export const updateDetailVerify = async (id, detailVerifyData) => {
-    const response = await axios.put(`${API_URL}/detail-verify/${id}`, detailVerifyData);
+    const response = await axiosInstance.put(`/detail-verify/${id}`, detailVerifyData);
     return response.data;
 };
 
 export const deleteDetailVerify = async (doorId,memberId) => {
-    await axios.delete(`${API_URL}/detail-verify/delete`, {
+    await axios.axiosInstance(`/detail-verify/delete`, {
         params: {
             doorId: doorId,
             memberId: memberId
@@ -111,7 +127,7 @@ export const verifyFingerprint = async (doorId, file) => {
     formData.append('doorId', doorId);
   
     try {
-      const response = await axios.post(`${API_URL}/door/${doorId}/verify`, formData, {
+      const response = await axiosInstance.post(`/door/${doorId}/verify`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -129,7 +145,7 @@ export const verifyFingerprint = async (doorId, file) => {
     formData.append('doorId', doorId);
   
     try {
-      const response = await axios.post(`${API_URL}/door/${doorId}/verify2`, formData, {
+      const response = await axiosInstance.post(`/door/${doorId}/verify2`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -180,4 +196,15 @@ export const getMemberForDoor = async (id) => {
 export const getHistoriesFalse = async () => {
     const response = await axiosInstance.get('/historyfalse');
     return response.data;
+}
+
+export const logout = async () => {
+    const response = await axiosInstance.get('/logout-success');
+    console.log(response)
+    // Xóa Authorization header trên tất cả các yêu cầu axios
+    delete axios.defaults.headers.common['Authorization'];
+        
+    // Xóa tất cả các instance của axios (nếu cần)
+    axiosInstance.defaults.headers.common['Authorization'] = '';
+    return response.data
 }
