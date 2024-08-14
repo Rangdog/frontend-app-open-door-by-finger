@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography  } from "@mui/material";
-import { getDoors, deleteDoor, updateDoor, createDoor, getHistoryByDoor } from "../api/services";
+import { getDoors, deleteDoor, updateDoor, createDoor, getHistoryByDoor, updatePassword } from "../api/services";
 import MuiAlert from '@mui/material/Alert';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
@@ -20,6 +20,10 @@ const DoorManagement = ({onBack}) => {
     const [detailDialogOpen, setDetailDialogOpen] = useState(false);
     const [doorHistory, setDoorHistory] = useState([]);
     const [currentDoorId, setCurrentDoorId] = useState(null);
+
+     // New states for Password Dialog
+     const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+     const [password, setPassword] = useState('');
 
     const fetchDoorDetails = async(doorId) =>{
         try{
@@ -106,6 +110,34 @@ const DoorManagement = ({onBack}) => {
     const handleDetailClose = () =>{
         setDetailDialogOpen(false)
     }
+
+    const handlePasswordOpen = (door) => {
+        setCurrentDoorId(door.id); // Set the current door ID
+        setPassword(''); // Reset the password input
+        setPasswordDialogOpen(true); // Open the password dialog
+    };
+
+    // Function to handle password input change
+    const handlePasswordChange = (e) => {
+        setPassword(e.target.value);
+    };
+
+    // Function to submit the password update
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            // Update password using the API
+            await updatePassword(currentDoorId, { password: password });
+            setSnackbarMessage("Cập nhật mật khẩu thành công!");
+            setSnackbarSeverity("success");
+        } catch (err) {
+            console.log(err);
+            setSnackbarMessage("Có lỗi xảy ra khi cập nhật mật khẩu!");
+            setSnackbarSeverity("error");
+        }
+        setSnackbarOpen(true);
+        setPasswordDialogOpen(false); // Close the password dialog
+    };
     return (
         <div style={{ padding: '20px' }}>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
@@ -134,6 +166,7 @@ const DoorManagement = ({onBack}) => {
                                 <TableCell>{door.location}</TableCell>
                                 <TableCell>
                                         <Button variant="contained" onClick={() => handleOpen(door)} style={{ marginRight: '10px' }}>Sửa</Button>
+                                        <Button variant="contained" onClick={() => handlePasswordOpen(door)} style={{ marginRight: '10px' }}>Thiết lập password</Button>
                                         <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Lịch sử</Button>
                                         <Button variant="contained" color="error" onClick={() => handleDelete(door.id)}>Xóa</Button>
                                 </TableCell>
@@ -200,6 +233,26 @@ const DoorManagement = ({onBack}) => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleDetailClose} color="primary">Đóng</Button>
+                </DialogActions>
+            </Dialog>
+            {/* Dialog for Setting Password */}
+            <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)}>
+                <DialogTitle>Thiết lập Mật khẩu cho Cửa {currentDoorId}</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        name="password"
+                        label="Mật khẩu"
+                        type="password"
+                        fullWidth
+                        value={password}
+                        onChange={handlePasswordChange}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPasswordDialogOpen(false)} color="primary">Hủy</Button>
+                    <Button onClick={handlePasswordSubmit} color="primary">Cập nhật</Button>
                 </DialogActions>
             </Dialog>
             <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>

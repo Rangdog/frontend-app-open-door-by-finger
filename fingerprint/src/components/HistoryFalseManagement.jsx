@@ -27,7 +27,7 @@ const HistoryManagement = ({ onViewDetail, onBack }) => { // Nhận prop onBack
             itemDate.toDateString() === selectedDate.toDateString() : true; // Compare dates
         if (searchMode === "door") {
             return (
-                item.doorId.toString().toLowerCase().includes(searchTerm.toLowerCase()) && isDateMatch // Tìm kiếm theo ID cửa
+                item.door.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) && isDateMatch // Tìm kiếm theo ID cửa
             );
         } else if (searchMode === "member") {
             return (
@@ -84,7 +84,7 @@ const HistoryManagement = ({ onViewDetail, onBack }) => { // Nhận prop onBack
                         {filteredHistory.map((item) => (
                             <TableRow key={item.id}>
                                 <TableCell>{item.id}</TableCell>
-                                <TableCell>{item.doorId}</TableCell>
+                                <TableCell>{item.door.id}</TableCell>
                                 <TableCell>{item.label}</TableCell>
                                 <TableCell>{item.similarity}</TableCell>
                                 <TableCell>
@@ -93,7 +93,7 @@ const HistoryManagement = ({ onViewDetail, onBack }) => { // Nhận prop onBack
                                         format(new Date(item.time), 'dd/MM/yyyy HH:mm:ss')
                                     }
                                 </TableCell>
-                                <TableCell>{item.reason === "0" ? "Dấu vân tay không có quyền mở cửa này" : item.reason === "1" ? "Dấu vân tay chưa vượt được ngưỡng tối thiểu" : "Có lỗi bên server xác thực vân tay"}</TableCell>
+                                <TableCell>{item.reason === "0" ? "Dấu vân tay không có quyền mở cửa này" : item.reason === "1" ? "Dấu vân tay chưa vượt được ngưỡng tối thiểu" : item.reason === "2" ? "Sai mật khẩu khi mở cửa bằng mật khẩu" : item.reason === "3" ? "Cửa chưa được thiết lập mật khẩu" : "Có lỗi bên server xác thực vân tay"}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

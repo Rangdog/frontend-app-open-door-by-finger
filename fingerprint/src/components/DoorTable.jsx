@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Grid, Snackbar,Typography, Autocomplete, InputAdornment, Select, MenuItem  } from "@mui/material";
-import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify,getMembersByDoor, getHistoryByDoor, verifyFingerprint, deleteDetailVerify, ResetFingerPrint, getMemberForDoor, verifyFingerprintByModel2  } from "../api/services";
+import { getDoors, createDoor, deleteDoor, updateDoor, getMembers,createDetailVerify,getMembersByDoor, getHistoryByDoor, verifyFingerprint, deleteDetailVerify, ResetFingerPrint, getMemberForDoor, verifyFingerprintByModel2 ,openDoorByPassword } from "../api/services";
 import MuiAlert from '@mui/material/Alert';
 import { debounce } from 'lodash';
 import SearchIcon from '@mui/icons-material/Search';
@@ -34,6 +34,9 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor, onViewHistoryFa
     const [currentDoorId, setCurrentDoorId] = useState(null);
 
     const [selectedModel, setSelectedModel] = useState('model1'); // State to store selected model
+
+    const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+    const [password, setPassword] = useState('');
 
     const fetchDoors = async () => {
         const data = await getDoors();
@@ -319,6 +322,44 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor, onViewHistoryFa
         door.location.toLowerCase().includes(searchTerm.toLowerCase())
       );
     const isAuthenticated = localStorage.getItem('token')
+
+
+    const handlePasswordOpen = (door) => {
+        setCurrentDoorId(door); // Set the current door ID
+        setPassword(''); // Reset the password input
+        setPasswordDialogOpen(true); // Open the password dialog
+    };
+
+    // Function to handle password input change
+    const handlePasswordChange = (e) => {
+        setPassword(e.target.value);
+    };
+
+    // Function to submit the password update
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            // Update password using the API
+            const res = await openDoorByPassword(currentDoorId, { password: password });
+            if (res.message && res.message.includes('Open door successfully')) {
+                setSnackbarMessage("Mở cửa thành công");  // Sử dụng thông báo từ server
+                setSnackbarSeverity("success");
+            } else if (result.message.includes('wrong password')) {
+                setSnackbarMessage("Sai mật khẩu"); // Thông báo không có quyền
+                setSnackbarSeverity("error");
+            } else if (result.message.includes('not set up password')) {
+                setSnackbarMessage("Cửa này chưa được set mật khẩu"); // Thông báo không tìm thấy vân tay
+                setSnackbarSeverity("error");
+            }
+        } catch (err) {
+            console.log(err);
+            setSnackbarMessage("Có lỗi khi mở cửa");
+            setSnackbarSeverity("error");
+        }
+        setSnackbarOpen(true);
+        setPasswordDialogOpen(false); // Close the password dialog
+    };
+
     return (
         <div style={{ padding: '20px' }}>
             <Grid container spacing={2} style={{ marginBottom: '20px' }}>
@@ -392,6 +433,7 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor, onViewHistoryFa
                                         {isAuthenticated? <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Chi tiết</Button> : <></>}
                                         {/* <Button variant="contained" color="secondary" onClick={() => handleDetailOpen(door)} style={{ marginRight: '10px' }}>Chi tiết</Button> */}
                                         <Button variant="contained" color="success" onClick={() => handleUnlockOpen(door.id)} style={{ marginRight: '10px' }}>Mở cửa</Button>
+                                        <Button variant="contained" color="success" onClick={() => handlePasswordOpen(door.id)} style={{ marginRight: '10px' }}>Mở cửa bằng mật khẩu</Button>
                                         {/* <Button variant="contained" color="error" onClick={() => openConfirmDeleteDialog(door.id, "door")}>Xóa</Button> */}        
                                 </TableCell>
                             </TableRow>
@@ -551,6 +593,27 @@ const DoorTable = ({ onManageMembers, onViewHistory, onViewDoor, onViewHistoryFa
                 <DialogActions>
                     <Button onClick={handleUnlockClose} color="primary">Hủy</Button>
                     <Button onClick={handleUnlock} color="primary">Xác nhận</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog for Setting Password */}
+            <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)}>
+                <DialogTitle>Thiết lập Mật khẩu cho Cửa {currentDoorId}</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        name="password"
+                        label="Mật khẩu"
+                        type="password"
+                        fullWidth
+                        value={password}
+                        onChange={handlePasswordChange}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPasswordDialogOpen(false)} color="primary">Hủy</Button>
+                    <Button onClick={handlePasswordSubmit} color="primary">Mở cửa</Button>
                 </DialogActions>
             </Dialog>
 

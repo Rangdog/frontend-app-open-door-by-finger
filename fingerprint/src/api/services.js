@@ -1,5 +1,6 @@
 import axios from "axios";
 import axiosInstance from "../api/api";
+import { da } from "date-fns/locale";
 
 const API_URL = "http://localhost:8080/api"; // Địa chỉ API của bạn
 
@@ -195,16 +196,23 @@ export const getMemberForDoor = async (id) => {
 
 export const getHistoriesFalse = async () => {
     const response = await axiosInstance.get('/historyfalse');
+    console.log(response.data)
     return response.data;
 }
 
-export const logout = async () => {
-    const response = await axiosInstance.get('/logout-success');
-    console.log(response)
-    // Xóa Authorization header trên tất cả các yêu cầu axios
-    delete axios.defaults.headers.common['Authorization'];
-        
-    // Xóa tất cả các instance của axios (nếu cần)
-    axiosInstance.defaults.headers.common['Authorization'] = '';
-    return response.data
+
+export const updatePassword  = async (id, data) => {
+    const response = await axiosInstance.put(`/door/${id}/password`,
+        data
+    );
+    console.log(response.data);
+    return response.data;
+}
+
+export const openDoorByPassword = async (id,data) => {
+    const response = await axiosInstance.post(`/door/${id}/opendoor/password`,
+       data
+    );
+    console.log(response.data);
+    return response.data;
 }

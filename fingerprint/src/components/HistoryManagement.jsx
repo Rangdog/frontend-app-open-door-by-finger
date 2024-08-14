@@ -97,8 +97,12 @@ const HistoryFalseManagement = ({ onViewDetail, onBack }) => { // Nhận prop on
                                 <TableCell>{item.id}</TableCell>
                                 <TableCell>{item.detailVerify.door.doorName}</TableCell>
                                 <TableCell>{item.detailVerify.door.id}</TableCell>
-                                <TableCell>{item.detailVerify.member.name}</TableCell>
-                                <TableCell>{item.detailVerify.member.id}</TableCell>
+                                <TableCell>{item.detailVerify && item.detailVerify.member && item.detailVerify.member.name
+        ? item.detailVerify.member.name
+        : "Cửa mở bằng mật khẩu"}</TableCell>
+                                <TableCell>{item.detailVerify && item.detailVerify.member && item.detailVerify.member.id
+        ? item.detailVerify.member.id
+        : "Cửa mở bằng mật khẩu"}</TableCell>
                                 <TableCell>
                                     {
                                         // Sử dụng date-fns để định dạng thời gian
